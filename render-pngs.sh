@@ -1,50 +1,63 @@
 #! /bin/bash
 
+#======================================
+#   Global Variables
+#======================================
 INKSCAPE="/usr/bin/inkscape"
-
-#--------------------------------------------------
-
-echo "Enter icon size (this is the width and height): "
-read SIZE
-echo "Enter icon-color: "
-read ICON_COLOR
-
-#--------------------------------------------------
-
 SOURCE="SVG/*.svg"
-ICONS_DIR=$ICON_COLOR
 DEFAULT_COLOR="#000000"
 
-if [ -z "$ICON_COLOR" ]; then
-    ICON_COLOR=$DEFAULT_COLOR
-    ICONS_DIR=$DEFAULT_COLOR
-fi
 
-#--------------------------------------------------
+#======================================
+#   User Input
+#======================================
+echo "Enter icon size (this is the width and height): "
+read SIZE
+echo "Enter 1 or more colors (space or tab separated): "
+read -a ICON_COLORS
 
-if [ ! -d $ICONS_DIR ]; then
-    mkdir $ICONS_DIR
-fi
 
-#--------------------------------------------------
-
-trap "sed -i 's/<path fill=\"$ICON_COLOR\"/<path/' $SOURCE; exit" EXIT
-
-sed -i "s/<path/<path fill=\"$ICON_COLOR\"/" $SOURCE
-
-for i in SVG/*.svg
+#======================================
+#   Loop over icon colors
+#======================================
+for color in ${ICON_COLORS[*]}
 do
 
-i2=${i##*/}  i2=${i2%.*}
+# Create dir with color name
+    if [ ! -d $color ] && [ ! -z "$ICON_COLORS" ]; then
+        mkdir $color
+    else
+        mkdir $DEFAULT_COLOR
+    fi
 
-if [ -f $ICONS_DIR/$i2.png ]; then
-        echo $ICONS_DIR/$i2.png exists.
-else
-    echo
-    echo Rendering $ICONS_DIR/$i2.png
-    $INKSCAPE --export-width=$SIZE \
-              --export-height=$SIZE \
-              --export-png=$ICONS_DIR/$i2.png $i >/dev/null
-fi
+
+# Trap sed
+    trap "sed -i 's/<path fill=\"$color\"/<path/' $SOURCE; exit" INT TERM
+
+
+# Temporarily edit svg's
+    sed -i "s/<path/<path fill=\"$color\"/" $SOURCE
+
+
+# Loop over SVG folder & render png's
+    for i in SVG/*.svg
+    do
+        i2=${i##*/}  i2=${i2%.*}
+
+        if [ -f $color/$i2.png ]; then
+                echo $color/$i2.png exists.
+        else
+            echo
+            echo Rendering $color/$i2.png
+            $INKSCAPE --export-width=$SIZE \
+                      --export-height=$SIZE \
+                      --export-png=$color/$i2.png $i >/dev/null
+        fi
+    done
+
+
+# Revert edit of svg's before next iteration or EXIT
+    sed -i "s/<path fill=\"$color\"/<path/" $SOURCE
+
 done
 exit 0
