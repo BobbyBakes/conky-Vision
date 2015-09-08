@@ -100,7 +100,7 @@ TEXT
 #----------------------------------------
 \
 \
-${execi 300 curl -s "http://weather.yahooapis.com/forecastrss?w=${template7}&u=${template8}q" -o ~/.cache/weather.xml}\
+${execi 300 curl -s "http://weather.yahooapis.com/forecastrss?w=${template7}&u=${template8}" -o ~/.cache/weather.xml}\
 \
 \
 #----------------------------------------
